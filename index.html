@@ -17,7 +17,6 @@
 <div class="nolinebreak">
     <span class="datepicker">Select date:</span>
     <date-picker
-            on:datechange={onDateChange}
             selected={dateNow}
             isAllowed={date => date.getTime() <= dateNow()}/>
 </div>
@@ -27,6 +26,10 @@
 </a></p>
 </body>
 <script>
+    let site = document.getElementsByTagName('date-picker');
+    site[0].addEventListener('datechange', (e) => {
+        onDateChange();
+    });
     // Datepicker
     const onDateChange = d => {
         currentDate = d.detail;
