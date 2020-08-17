@@ -1,26 +1,26 @@
 # svelte-datepicker
 - Web-component: `<date-picker></date-picker>`
-- or Svelte-component: `import DatePicker from 'svelte-datepicker'`
+- or Svelte-component: `import DatePicker from 'svelte-generic-datepicker'`
 
 css3 layout label transition input text field
 
-[Try out live example:](https://ivosdc.github.io/svelte-datepicker/ "GeneralCrudTable Example")
+[Try out live example:](https://ivosdc.github.io/svelte-datepicker/ "Datepicker Example")
 
 [![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/svelte-datepicker)
 
 ## Install
 
 ```
-npm install svelte-datepicker
+npm install svelte-generic-datepicker
 ```
 
-[![Donate](https://github.com/ivosdc/svelte-generic-crud-table/raw/master/assets/donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7V5M288MUT7GE&source=url)
+[![Donate](https://github.com/ivosdc/svelte-datepicker/raw/master/assets/donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7V5M288MUT7GE&source=url)
 
 
 # Usage
 Import the component.
 ```
-    import DatePicker from 'svelte-dsatepicker'
+    import DatePicker from 'svelte-generic-datepicker'
 ```
 
 Use the component.
