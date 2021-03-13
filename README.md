@@ -53,9 +53,7 @@ The datepicker offers the parameter:
 <hr>
 <div class="nolinebreak">
     <span class="datepicker">Select date:</span>
-    <date-picker
-            selected={dateNow}
-            isAllowed={date => date.getTime() <= dateNow()}/>
+    <date-picker></date-picker>
 </div>
 </body>
 </template>

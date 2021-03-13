@@ -1,26 +1,22 @@
 <svelte:options tag={'date-picker'}/>
 <script>
-    import {createEventDispatcher} from "svelte";
-    import Calender from "./Calender.svelte";
-    import {getMonthName} from "./date-time.js";
+    import {createEventDispatcher} from 'svelte';
+    import {getDateRows, getMonthName, uuid, noop} from "./date-time.js";
+    import {iconLeft, iconRight} from "./IconService";
 
     const dispatch = createEventDispatcher();
 
-    // props
-    export let isAllowed = () => true;
+    let isallowed = () => {return true};
     export let selected = new Date();
+    $: selected  = (typeof selected === 'string') ? new Date(parseInt(selected)) : selected;
 
-    // state
     let date, month, year, showDatePicker;
-
-    // so that these change with props
     $: {
         date = selected.getUTCDate();
         month = selected.getUTCMonth();
         year = selected.getUTCFullYear();
     }
 
-    // handlers
     const onFocus = () => {
         showDatePicker = true;
     };
@@ -43,11 +39,6 @@
         month -= 1;
     };
 
-    const onDateChange = d => {
-        showDatePicker = false;
-        dispatch("datechange", d.detail);
-    };
-
     const convertSelected = () => {
         const options = {weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit'};
 
@@ -59,92 +50,176 @@
         showDatePicker = false;
     });
 
+    const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    let cells;
+
+    const onChange = date => {
+        showDatePicker = false;
+        selected = new Date(Date.UTC(year, month, date));
+        dispatch('datechange', {selected})
+    };
+
+    const allow = (year, month, date) => {
+        if (!date) return true;
+        return isallowed(new Date(year, month, date));
+    };
+
+    $: cells = getDateRows(month, year).map(c => ({
+        value: c,
+        allowed: allow(year, month, c)
+    }));
+
 </script>
 
 <div id="datepicker" class="relative" on:click={(e) => {e.stopPropagation();}}>
     {#if showDatePicker}
         <div class="box">
             <div class="month-name">
-                <div class="center">
-                    <button type=text on:click={prev}>Prev</button>
+                <div>
+                    <button type=text on:click={prev}>{@html iconLeft}</button>
                 </div>
                 <div class="center">{getMonthName(month)} {year}</div>
-                <div class="center">
-                    <button type=text on:click={next}>Next</button>
+                <div>
+                    <button type=text on:click={next}>{@html iconRight}</button>
                 </div>
             </div>
-            <Calender
-                    {month}
-                    {year}
-                    date={selected}
-                    {isAllowed}
-                    on:datechange={onDateChange}/>
+            <!-- Calendar -->
+            <div class="container">
+                <div class="row">
+                    {#each weekdays as day}
+                        <div class="cell weekday">{day}</div>
+                    {/each}
+                </div>
+
+                <div class="row">
+                    {#each cells as {allowed, value} (uuid())}
+                        <div
+                                on:click={allowed && value ? onChange.bind(this, value) : noop}
+                                class:cell={true}
+                                class:highlight={allowed && value}
+                                class:disabled={!allowed}
+                                class:selected={selected === new Date(year, month, value)}>
+                            {value || ''}
+                        </div>
+                    {/each}
+                </div>
+            </div>
+
         </div>
     {/if}
     <input type="text" size="14" on:focus={onFocus} value={convertSelected(selected)}/>
 </div>
 
 <style>
+    input {
+        outline: none;
+        border: 1px solid #999999;
+        background-color: inherit;
+        font-weight: 300;
+        cursor: pointer;
+    }
+
     .relative {
         position: relative;
-        z-index: 1000;
+        z-index: 10000;
     }
 
     .box {
         position: absolute;
-        top: -120px;
+        top: 0;
         left: 40px;
-        border: 1px solid lightsteelblue;
+        border: 1px solid #004666;
         display: inline-block;
-        opacity: 100%;
-        font-size: 0.95em;
         font-weight: 200;
-        background-color: #efefef;
-    }
-
-    .month-name {
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        margin: 0.2em 0;
+        background-color: #004666;
+        color: #ffffff;
     }
 
     .center {
         display: flex;
         justify-content: center;
         align-items: center;
-        border: none;
-        outline: none;
-        font-size: 0.95em;
-        font-weight: 200;
-        padding-top: 0.4em;
-        height: 1em;
     }
 
     button {
         outline: none;
         border: none;
-        color: #999999;
-        background-color: inherit;
-        font-size: 0.85em;
-        font-weight: 200;
-        height: 1.3em;
+        background-color: white;
         cursor: pointer;
+        margin: 2px 8px;
+        border-radius: 100%;
+        width: 32px;
+        height: 32px;
+        text-align: center;
     }
 
     button:hover {
-        background-color: #ffffff;
+        background-color: #4A849F;
+        color: white;
     }
 
-    input {
-        outline: none;
-        border: 1px solid #999999;
-        color: #999999;
-        background-color: inherit;
-        font-size: 0.85em;
+    .container {
+        background-color: #dedede;
+    }
+
+    .row {
+        text-align: center;
+        display: grid;
+        grid-template-columns: auto auto auto auto auto auto auto;
+        font-weight: 300;
+        padding: 0.3em;
+        flex-wrap: wrap;
+    }
+
+    .cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 32px;
+        height: 32px;
+        margin: 3px;
+        background-color: #ededed;
+        border-radius: 100%;
+    }
+
+    .weekday {
+        color: #9a9a9a;
+        font-weight: 300;
+        background-color: whitesmoke;
+    }
+
+    .month-name {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 4px 0;
+    }
+
+    .selected {
+        background-color: #4A849F;
         font-weight: 200;
-        height: 1.3em;
-        border-radius: 3px;
+        color: white;
+        text-shadow: 0 0 0.5em white;
+    }
+
+    .highlight {
+        background-color: white;
+        color: grey;
+    }
+
+    .disabled {
+        background-color: #9d9d9d;
+        cursor: not-allowed;
+    }
+
+    .highlight:hover {
+        background-color: #004666;
+        color: white;
         cursor: pointer;
     }
+
+    .selected.highlight:hover {
+        background: #004666;
+    }
+
 </style>
