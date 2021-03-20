@@ -449,18 +449,18 @@ var DatePicker = (function () {
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[16] = list[i].allowed;
-    	child_ctx[17] = list[i].value;
+    	child_ctx[18] = list[i].allowed;
+    	child_ctx[19] = list[i].value;
     	return child_ctx;
     }
 
     function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[20] = list[i];
+    	child_ctx[22] = list[i];
     	return child_ctx;
     }
 
-    // (75:4) {#if showDatePicker}
+    // (83:4) {#if showDatePicker}
     function create_if_block(ctx) {
     	let div7;
     	let div3;
@@ -623,10 +623,10 @@ var DatePicker = (function () {
     	};
     }
 
-    // (89:20) {#each weekdays as day}
+    // (97:20) {#each weekdays as day}
     function create_each_block_1(ctx) {
     	let div;
-    	let t_value = /*day*/ ctx[20] + "";
+    	let t_value = /*day*/ ctx[22] + "";
     	let t;
 
     	return {
@@ -646,10 +646,10 @@ var DatePicker = (function () {
     	};
     }
 
-    // (95:20) {#each cells as {allowed, value}
+    // (103:20) {#each cells as {allowed, value}
     function create_each_block(key_1, ctx) {
     	let div;
-    	let t0_value = (/*value*/ ctx[17] || "") + "";
+    	let t0_value = (/*value*/ ctx[19] || "") + "";
     	let t0;
     	let t1;
     	let mounted;
@@ -663,9 +663,9 @@ var DatePicker = (function () {
     			t0 = text(t0_value);
     			t1 = space();
     			toggle_class(div, "cell", true);
-    			toggle_class(div, "highlight", /*allowed*/ ctx[16] && /*value*/ ctx[17]);
-    			toggle_class(div, "disabled", !/*allowed*/ ctx[16]);
-    			toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[17]));
+    			toggle_class(div, "highlight", /*allowed*/ ctx[18] && /*value*/ ctx[19]);
+    			toggle_class(div, "disabled", !/*allowed*/ ctx[18]);
+    			toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[19]));
     			this.first = div;
     		},
     		m(target, anchor) {
@@ -675,10 +675,10 @@ var DatePicker = (function () {
 
     			if (!mounted) {
     				dispose = listen(div, "click", function () {
-    					if (is_function(/*allowed*/ ctx[16] && /*value*/ ctx[17]
-    					? /*onChange*/ ctx[10].bind(this, /*value*/ ctx[17])
-    					: noop$1)) (/*allowed*/ ctx[16] && /*value*/ ctx[17]
-    					? /*onChange*/ ctx[10].bind(this, /*value*/ ctx[17])
+    					if (is_function(/*allowed*/ ctx[18] && /*value*/ ctx[19]
+    					? /*onChange*/ ctx[10].bind(this, /*value*/ ctx[19])
+    					: noop$1)) (/*allowed*/ ctx[18] && /*value*/ ctx[19]
+    					? /*onChange*/ ctx[10].bind(this, /*value*/ ctx[19])
     					: noop$1).apply(this, arguments);
     				});
 
@@ -687,18 +687,18 @@ var DatePicker = (function () {
     		},
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty & /*cells*/ 16 && t0_value !== (t0_value = (/*value*/ ctx[17] || "") + "")) set_data(t0, t0_value);
+    			if (dirty & /*cells*/ 16 && t0_value !== (t0_value = (/*value*/ ctx[19] || "") + "")) set_data(t0, t0_value);
 
     			if (dirty & /*cells*/ 16) {
-    				toggle_class(div, "highlight", /*allowed*/ ctx[16] && /*value*/ ctx[17]);
+    				toggle_class(div, "highlight", /*allowed*/ ctx[18] && /*value*/ ctx[19]);
     			}
 
     			if (dirty & /*cells*/ 16) {
-    				toggle_class(div, "disabled", !/*allowed*/ ctx[16]);
+    				toggle_class(div, "disabled", !/*allowed*/ ctx[18]);
     			}
 
     			if (dirty & /*selected, Date, year, month, cells*/ 23) {
-    				toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[17]));
+    				toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[19]));
     			}
     		},
     		d(detaching) {
@@ -781,13 +781,19 @@ var DatePicker = (function () {
 
     function instance($$self, $$props, $$invalidate) {
     	const dispatch = createEventDispatcher();
-
-    	let isallowed = () => {
-    		return true;
-    	};
-
     	let { selected = new Date() } = $$props;
+
+    	let { isallowed = date => {
+    		return date.getTime() <= dateNow();
+    	} } = $$props;
+
+    	let { locale = "en-EN" } = $$props;
     	let date, month, year, showDatePicker;
+
+    	let dateNow = () => {
+    		let now = new Date();
+    		return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
+    	};
 
     	const onFocus = () => {
     		$$invalidate(3, showDatePicker = true);
@@ -821,7 +827,7 @@ var DatePicker = (function () {
     			day: "2-digit"
     		};
 
-    		return selected.toLocaleDateString("de-DE", options);
+    		return selected.toLocaleDateString(locale, options);
     	};
 
     	let site = document.getElementsByTagName("html");
@@ -841,11 +847,13 @@ var DatePicker = (function () {
 
     	const allow = (year, month, date) => {
     		if (!date) return true;
-    		return isallowed();
+    		return isallowed(new Date(year, month, date));
     	};
 
     	$$self.$$set = $$props => {
     		if ("selected" in $$props) $$invalidate(0, selected = $$props.selected);
+    		if ("isallowed" in $$props) $$invalidate(11, isallowed = $$props.isallowed);
+    		if ("locale" in $$props) $$invalidate(12, locale = $$props.locale);
     	};
 
     	$$self.$$.update = () => {
@@ -879,15 +887,17 @@ var DatePicker = (function () {
     		prev,
     		convertSelected,
     		weekdays,
-    		onChange
+    		onChange,
+    		isallowed,
+    		locale
     	];
     }
 
     class DatePicker extends SvelteElement {
     	constructor(options) {
     		super();
-    		this.shadowRoot.innerHTML = `<style>input{outline:none;border:1px solid #999999;background-color:inherit;font-weight:300;cursor:pointer}.relative{position:relative}.box{position:fixed;border:1px solid #004666;display:inline-block;font-weight:200;background-color:#004666;color:#ffffff;z-index:10000}.center{display:flex;justify-content:center;align-items:center}button{outline:none;border:none;background-color:white;cursor:pointer;margin:2px 8px;border-radius:100%;width:32px;height:32px;text-align:center}button:hover{background-color:#4A849F;color:white}.container{background-color:#dedede}.row{text-align:center;display:grid;grid-template-columns:auto auto auto auto auto auto auto;font-weight:300;padding:0.3em;flex-wrap:wrap}.cell{display:flex;justify-content:center;align-items:center;width:32px;height:32px;margin:3px;background-color:#ededed;border-radius:100%}.weekday{color:#9a9a9a;font-weight:300;background-color:whitesmoke}.month-name{display:flex;justify-content:space-around;align-items:center;padding:4px 0}.selected{background-color:#4A849F;font-weight:200;color:white;text-shadow:0 0 0.5em white}.highlight{background-color:white;color:grey}.disabled{background-color:#9d9d9d;cursor:not-allowed}.highlight:hover{background-color:#004666;color:white;cursor:pointer}.selected.highlight:hover{background:#004666}</style>`;
-    		init(this, { target: this.shadowRoot }, instance, create_fragment, safe_not_equal, { selected: 0 });
+    		this.shadowRoot.innerHTML = `<style>input{outline:none;border:1px solid #999999;background-color:inherit;font-weight:300;cursor:pointer}.relative{position:relative}.box{position:fixed;border:1px solid #004666;display:inline-block;font-weight:200;background-color:#004666;color:#ffffff;z-index:10000}.center{display:flex;justify-content:center;align-items:center;width:100%}button{outline:none;border:none;background-color:white;cursor:pointer;justify-content:center;align-items:center;margin:3px;padding:4px}button:hover{background-color:#4A849F;color:white}.container{background-color:#dedede}.row{text-align:center;display:grid;grid-template-columns:auto auto auto auto auto auto auto;font-weight:300;padding:0.3em;flex-wrap:wrap}.cell{display:flex;justify-content:center;align-items:center;margin:3px;padding:4px;background-color:#ededed}.weekday{color:#9a9a9a;font-weight:300;background-color:whitesmoke}.month-name{display:flex;justify-content:space-around;align-items:center;padding:4px 0}.selected{background-color:#4A849F;font-weight:200;color:white;text-shadow:0 0 0.5em white}.highlight{background-color:white;color:grey}.disabled{background-color:#9d9d9d;cursor:not-allowed}.highlight:hover{background-color:#004666;color:white;cursor:pointer}.selected.highlight:hover{background:#004666}</style>`;
+    		init(this, { target: this.shadowRoot }, instance, create_fragment, safe_not_equal, { selected: 0, isallowed: 11, locale: 12 });
 
     		if (options) {
     			if (options.target) {
@@ -902,7 +912,7 @@ var DatePicker = (function () {
     	}
 
     	static get observedAttributes() {
-    		return ["selected"];
+    		return ["selected", "isallowed", "locale"];
     	}
 
     	get selected() {
@@ -911,6 +921,24 @@ var DatePicker = (function () {
 
     	set selected(selected) {
     		this.$set({ selected });
+    		flush();
+    	}
+
+    	get isallowed() {
+    		return this.$$.ctx[11];
+    	}
+
+    	set isallowed(isallowed) {
+    		this.$set({ isallowed });
+    		flush();
+    	}
+
+    	get locale() {
+    		return this.$$.ctx[12];
+    	}
+
+    	set locale(locale) {
+    		this.$set({ locale });
     		flush();
     	}
     }
