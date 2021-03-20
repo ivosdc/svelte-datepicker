@@ -6,15 +6,23 @@
 
     const dispatch = createEventDispatcher();
 
-    let isallowed = () => {return true};
     export let selected = new Date();
     $: selected  = (typeof selected === 'string') ? new Date(parseInt(selected)) : selected;
+
+    export let isallowed = (date) => {return date.getTime() <= dateNow()};
+
+    export let locale = 'en-EN';
 
     let date, month, year, showDatePicker;
     $: {
         date = selected.getUTCDate();
         month = selected.getUTCMonth();
         year = selected.getUTCFullYear();
+    }
+
+    let dateNow = () => {
+        let now = new Date();
+        return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
     }
 
     const onFocus = () => {
@@ -42,7 +50,7 @@
     const convertSelected = () => {
         const options = {weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit'};
 
-        return selected.toLocaleDateString("de-DE", options);
+        return selected.toLocaleDateString(locale, options);
     }
 
     let site = document.getElementsByTagName('html');
@@ -137,6 +145,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        width: 100%;
     }
 
     button {
@@ -144,11 +153,10 @@
         border: none;
         background-color: white;
         cursor: pointer;
-        margin: 2px 8px;
-        border-radius: 100%;
-        width: 32px;
-        height: 32px;
-        text-align: center;
+        justify-content: center;
+        align-items: center;
+        margin: 3px;
+        padding: 4px;
     }
 
     button:hover {
@@ -173,11 +181,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 32px;
-        height: 32px;
         margin: 3px;
+        padding: 4px;
         background-color: #ededed;
-        border-radius: 100%;
     }
 
     .weekday {
