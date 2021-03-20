@@ -121,18 +121,16 @@
 
     .relative {
         position: relative;
-        z-index: 10000;
     }
 
     .box {
-        position: absolute;
-        top: 0;
-        left: 40px;
+        position: fixed;
         border: 1px solid #004666;
         display: inline-block;
         font-weight: 200;
         background-color: #004666;
         color: #ffffff;
+        z-index: 10000;
     }
 
     .center {
