@@ -71,6 +71,13 @@ var DatePicker = (function () {
         e.initCustomEvent(type, false, false, detail);
         return e;
     }
+    function attribute_to_object(attributes) {
+        const result = {};
+        for (const attribute of attributes) {
+            result[attribute.name] = attribute.value;
+        }
+        return result;
+    }
 
     let current_component;
     function set_current_component(component) {
@@ -78,7 +85,7 @@ var DatePicker = (function () {
     }
     function get_current_component() {
         if (!current_component)
-            throw new Error(`Function called outside component initialization`);
+            throw new Error('Function called outside component initialization');
         return current_component;
     }
     function createEventDispatcher() {
@@ -125,6 +132,7 @@ var DatePicker = (function () {
                 set_current_component(component);
                 update(component.$$);
             }
+            set_current_component(null);
             dirty_components.length = 0;
             while (binding_callbacks.length)
                 binding_callbacks.pop()();
@@ -165,102 +173,24 @@ var DatePicker = (function () {
             block.i(local);
         }
     }
-
-    function destroy_block(block, lookup) {
-        block.d(1);
-        lookup.delete(block.key);
-    }
-    function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
-        let o = old_blocks.length;
-        let n = list.length;
-        let i = o;
-        const old_indexes = {};
-        while (i--)
-            old_indexes[old_blocks[i].key] = i;
-        const new_blocks = [];
-        const new_lookup = new Map();
-        const deltas = new Map();
-        i = n;
-        while (i--) {
-            const child_ctx = get_context(ctx, list, i);
-            const key = get_key(child_ctx);
-            let block = lookup.get(key);
-            if (!block) {
-                block = create_each_block(key, child_ctx);
-                block.c();
-            }
-            else if (dynamic) {
-                block.p(child_ctx, dirty);
-            }
-            new_lookup.set(key, new_blocks[i] = block);
-            if (key in old_indexes)
-                deltas.set(key, Math.abs(i - old_indexes[key]));
-        }
-        const will_move = new Set();
-        const did_move = new Set();
-        function insert(block) {
-            transition_in(block, 1);
-            block.m(node, next);
-            lookup.set(block.key, block);
-            next = block.first;
-            n--;
-        }
-        while (o && n) {
-            const new_block = new_blocks[n - 1];
-            const old_block = old_blocks[o - 1];
-            const new_key = new_block.key;
-            const old_key = old_block.key;
-            if (new_block === old_block) {
-                // do nothing
-                next = new_block.first;
-                o--;
-                n--;
-            }
-            else if (!new_lookup.has(old_key)) {
-                // remove old block
-                destroy(old_block, lookup);
-                o--;
-            }
-            else if (!lookup.has(new_key) || will_move.has(new_key)) {
-                insert(new_block);
-            }
-            else if (did_move.has(old_key)) {
-                o--;
-            }
-            else if (deltas.get(new_key) > deltas.get(old_key)) {
-                did_move.add(new_key);
-                insert(new_block);
-            }
-            else {
-                will_move.add(old_key);
-                o--;
-            }
-        }
-        while (o--) {
-            const old_block = old_blocks[o];
-            if (!new_lookup.has(old_block.key))
-                destroy(old_block, lookup);
-        }
-        while (n)
-            insert(new_blocks[n - 1]);
-        return new_blocks;
-    }
-    function mount_component(component, target, anchor) {
+    function mount_component(component, target, anchor, customElement) {
         const { fragment, on_mount, on_destroy, after_update } = component.$$;
         fragment && fragment.m(target, anchor);
-        // onMount happens before the initial afterUpdate
-        add_render_callback(() => {
-            const new_on_destroy = on_mount.map(run).filter(is_function);
-            if (on_destroy) {
-                on_destroy.push(...new_on_destroy);
-            }
-            else {
-                // Edge case - component was destroyed immediately,
-                // most likely as a result of a binding initialising
-                run_all(new_on_destroy);
-            }
-            component.$$.on_mount = [];
-        });
+        if (!customElement) {
+            // onMount happens before the initial afterUpdate
+            add_render_callback(() => {
+                const new_on_destroy = on_mount.map(run).filter(is_function);
+                if (on_destroy) {
+                    on_destroy.push(...new_on_destroy);
+                }
+                else {
+                    // Edge case - component was destroyed immediately,
+                    // most likely as a result of a binding initialising
+                    run_all(new_on_destroy);
+                }
+                component.$$.on_mount = [];
+            });
+        }
         after_update.forEach(add_render_callback);
     }
     function destroy_component(component, detaching) {
@@ -285,7 +215,6 @@ var DatePicker = (function () {
     function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
         const parent_component = current_component;
         set_current_component(component);
-        const prop_values = options.props || {};
         const $$ = component.$$ = {
             fragment: null,
             ctx: null,
@@ -297,6 +226,7 @@ var DatePicker = (function () {
             // lifecycle
             on_mount: [],
             on_destroy: [],
+            on_disconnect: [],
             before_update: [],
             after_update: [],
             context: new Map(parent_component ? parent_component.$$.context : []),
@@ -307,7 +237,7 @@ var DatePicker = (function () {
         };
         let ready = false;
         $$.ctx = instance
-            ? instance(component, prop_values, (i, ret, ...rest) => {
+            ? instance(component, options.props || {}, (i, ret, ...rest) => {
                 const value = rest.length ? rest[0] : ret;
                 if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
                     if (!$$.skip_bound && $$.bound[i])
@@ -336,7 +266,7 @@ var DatePicker = (function () {
             }
             if (options.intro)
                 transition_in(component.$$.fragment);
-            mount_component(component, options.target, options.anchor);
+            mount_component(component, options.target, options.anchor, options.customElement);
             flush();
         }
         set_current_component(parent_component);
@@ -349,6 +279,8 @@ var DatePicker = (function () {
                 this.attachShadow({ mode: 'open' });
             }
             connectedCallback() {
+                const { on_mount } = this.$$;
+                this.$$.on_disconnect = on_mount.map(run).filter(is_function);
                 // @ts-ignore todo: improve typings
                 for (const key in this.$$.slotted) {
                     // @ts-ignore todo: improve typings
@@ -357,6 +289,9 @@ var DatePicker = (function () {
             }
             attributeChangedCallback(attr, _oldValue, newValue) {
                 this[attr] = newValue;
+            }
+            disconnectedCallback() {
+                run_all(this.$$.on_disconnect);
             }
             $destroy() {
                 destroy_component(this, 1);
@@ -382,41 +317,36 @@ var DatePicker = (function () {
         };
     }
 
+    let locales = 'en-EN';
+
+    function setLocales(locale) {
+        locales = locale;
+    }
+
     const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
+        getMonthLong('1.1.1970'),
+        getMonthLong('2.1.1970'),
+        getMonthLong('3.1.1970'),
+        getMonthLong('4.1.1970'),
+        getMonthLong('5.1.1970'),
+        getMonthLong('6.1.1970'),
+        getMonthLong('7.1.1970'),
+        getMonthLong('8.1.1970'),
+        getMonthLong('9.1.1970'),
+        getMonthLong('10.1.1970'),
+        getMonthLong('11.1.1970'),
+        getMonthLong('12.1.1970')
     ];
-    const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    const isLeapYear = year => year % 4 === 0;
-    const getEmptyRows = () => {
-        return Array.from({length: 42}).map(() => []);
-    };
-    const getMonthDays = (index, year) => {
-        return index !== 1 ? monthDays[index] : isLeapYear(year) ? 29 : 28;
-    };
 
-    const getMonthStats = (monthIndex, year) => {
-        const today = new Date(year, monthIndex, 1);
-        const index = today.getMonth();
-        return {
-            name: index[index],
-            days: getMonthDays(index, year)
-        };
-    };
+    const weekdays = [getWeekdayShort('1.4.1970'),
+        getWeekdayShort('1.5.1970'),
+        getWeekdayShort('1.6.1970'),
+        getWeekdayShort('1.7.1970'),
+        getWeekdayShort('1.8.1970'),
+        getWeekdayShort('1.9.1970'),
+        getWeekdayShort('1.10.1970')];
 
-    const getMonthName = index => monthNames[index];
-
-    const getDateRows = (monthIndex, year) => {
+    function getDateRows(monthIndex, year) {
         const {days} = getMonthStats(monthIndex, year);
         const rows = getEmptyRows();
         const startIndex = new Date(year, monthIndex, 1).getDay();
@@ -427,17 +357,40 @@ var DatePicker = (function () {
         const filled = rows.map(i => (Array.isArray(i) ? undefined : i));
 
         return filled[35] ? filled : filled.slice(0, -7);
-    };
+    }
 
-    const noop$1 = () => {
-    };
+    const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-    const uuid = (() => {
-        let id = 1;
-        return () => {
-            return ++id;
+    const isLeapYear = year => year % 4 === 0;
+
+    function getEmptyRows() {
+        return Array.from({length: 42}).map(() => []);
+    }
+
+    function getMonthLong(time) {
+        return new Date(time).toLocaleDateString(locales, {
+            month: 'long'
+        })
+    }
+
+    function getWeekdayShort(time) {
+        return new Date(time).toLocaleDateString(locales, {
+            weekday: 'short'
+        }).substr(0,2);
+    }
+
+    function getMonthDays(index, year) {
+        return index !== 1 ? monthDays[index] : isLeapYear(year) ? 29 : 28;
+    }
+
+    function getMonthStats(monthIndex, year) {
+        const today = new Date(year, monthIndex, 1);
+        const index = today.getMonth();
+        return {
+            name: index[index],
+            days: getMonthDays(index, year)
         };
-    })();
+    }
 
     const iconLeft =
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>';
@@ -445,22 +398,22 @@ var DatePicker = (function () {
     const iconRight =
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
 
-    /* src/DatePicker.svelte generated by Svelte v3.24.1 */
+    /* src/DatePicker.svelte generated by Svelte v3.35.0 */
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[18] = list[i].allowed;
-    	child_ctx[19] = list[i].value;
+    	child_ctx[17] = list[i].allowed;
+    	child_ctx[18] = list[i].value;
     	return child_ctx;
     }
 
     function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[22] = list[i];
+    	child_ctx[21] = list[i];
     	return child_ctx;
     }
 
-    // (83:4) {#if showDatePicker}
+    // (86:4) {#if showDatePicker}
     function create_if_block(ctx) {
     	let div7;
     	let div3;
@@ -468,7 +421,7 @@ var DatePicker = (function () {
     	let button0;
     	let t0;
     	let div1;
-    	let t1_value = getMonthName(/*month*/ ctx[1]) + "";
+    	let t1_value = getMonthLong(/*month*/ ctx[1]) + "";
     	let t1;
     	let t2;
     	let t3;
@@ -480,11 +433,9 @@ var DatePicker = (function () {
     	let div4;
     	let t6;
     	let div5;
-    	let each_blocks = [];
-    	let each1_lookup = new Map();
     	let mounted;
     	let dispose;
-    	let each_value_1 = /*weekdays*/ ctx[9];
+    	let each_value_1 = weekdays;
     	let each_blocks_1 = [];
 
     	for (let i = 0; i < each_value_1.length; i += 1) {
@@ -492,12 +443,10 @@ var DatePicker = (function () {
     	}
 
     	let each_value = /*cells*/ ctx[4];
-    	const get_key = ctx => uuid();
+    	let each_blocks = [];
 
     	for (let i = 0; i < each_value.length; i += 1) {
-    		let child_ctx = get_each_context(ctx, each_value, i);
-    		let key = get_key();
-    		each1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
     	}
 
     	return {
@@ -578,11 +527,11 @@ var DatePicker = (function () {
     			}
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*month*/ 2 && t1_value !== (t1_value = getMonthName(/*month*/ ctx[1]) + "")) set_data(t1, t1_value);
+    			if (dirty & /*month*/ 2 && t1_value !== (t1_value = getMonthLong(/*month*/ ctx[1]) + "")) set_data(t1, t1_value);
     			if (dirty & /*year*/ 4) set_data(t3, /*year*/ ctx[2]);
 
-    			if (dirty & /*weekdays*/ 512) {
-    				each_value_1 = /*weekdays*/ ctx[9];
+    			if (dirty & /*weekdays*/ 0) {
+    				each_value_1 = weekdays;
     				let i;
 
     				for (i = 0; i < each_value_1.length; i += 1) {
@@ -604,29 +553,43 @@ var DatePicker = (function () {
     				each_blocks_1.length = each_value_1.length;
     			}
 
-    			if (dirty & /*cells, selected, Date, year, month, onChange, noop*/ 1047) {
-    				const each_value = /*cells*/ ctx[4];
-    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each1_lookup, div5, destroy_block, create_each_block, null, get_each_context);
+    			if (dirty & /*cells, selected, Date, year, month, onChange*/ 535) {
+    				each_value = /*cells*/ ctx[4];
+    				let i;
+
+    				for (i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(div5, null);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value.length;
     			}
     		},
     		d(detaching) {
     			if (detaching) detach(div7);
     			destroy_each(each_blocks_1, detaching);
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].d();
-    			}
-
+    			destroy_each(each_blocks, detaching);
     			mounted = false;
     			run_all(dispose);
     		}
     	};
     }
 
-    // (97:20) {#each weekdays as day}
+    // (100:20) {#each weekdays as day}
     function create_each_block_1(ctx) {
     	let div;
-    	let t_value = /*day*/ ctx[22] + "";
+    	let t_value = /*day*/ ctx[21] + "";
     	let t;
 
     	return {
@@ -646,27 +609,24 @@ var DatePicker = (function () {
     	};
     }
 
-    // (103:20) {#each cells as {allowed, value}
-    function create_each_block(key_1, ctx) {
+    // (106:20) {#each cells as {allowed, value}}
+    function create_each_block(ctx) {
     	let div;
-    	let t0_value = (/*value*/ ctx[19] || "") + "";
+    	let t0_value = (/*value*/ ctx[18] || "") + "";
     	let t0;
     	let t1;
     	let mounted;
     	let dispose;
 
     	return {
-    		key: key_1,
-    		first: null,
     		c() {
     			div = element("div");
     			t0 = text(t0_value);
     			t1 = space();
     			toggle_class(div, "cell", true);
-    			toggle_class(div, "highlight", /*allowed*/ ctx[18] && /*value*/ ctx[19]);
-    			toggle_class(div, "disabled", !/*allowed*/ ctx[18]);
-    			toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[19]));
-    			this.first = div;
+    			toggle_class(div, "highlight", /*allowed*/ ctx[17] && /*value*/ ctx[18]);
+    			toggle_class(div, "disabled", !/*allowed*/ ctx[17]);
+    			toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[18]));
     		},
     		m(target, anchor) {
     			insert(target, div, anchor);
@@ -675,11 +635,11 @@ var DatePicker = (function () {
 
     			if (!mounted) {
     				dispose = listen(div, "click", function () {
-    					if (is_function(/*allowed*/ ctx[18] && /*value*/ ctx[19]
-    					? /*onChange*/ ctx[10].bind(this, /*value*/ ctx[19])
-    					: noop$1)) (/*allowed*/ ctx[18] && /*value*/ ctx[19]
-    					? /*onChange*/ ctx[10].bind(this, /*value*/ ctx[19])
-    					: noop$1).apply(this, arguments);
+    					if (is_function(/*allowed*/ ctx[17] && /*value*/ ctx[18]
+    					? /*onChange*/ ctx[9].bind(this, /*value*/ ctx[18])
+    					: click_handler)) (/*allowed*/ ctx[17] && /*value*/ ctx[18]
+    					? /*onChange*/ ctx[9].bind(this, /*value*/ ctx[18])
+    					: click_handler).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -687,18 +647,18 @@ var DatePicker = (function () {
     		},
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty & /*cells*/ 16 && t0_value !== (t0_value = (/*value*/ ctx[19] || "") + "")) set_data(t0, t0_value);
+    			if (dirty & /*cells*/ 16 && t0_value !== (t0_value = (/*value*/ ctx[18] || "") + "")) set_data(t0, t0_value);
 
     			if (dirty & /*cells*/ 16) {
-    				toggle_class(div, "highlight", /*allowed*/ ctx[18] && /*value*/ ctx[19]);
+    				toggle_class(div, "highlight", /*allowed*/ ctx[17] && /*value*/ ctx[18]);
     			}
 
     			if (dirty & /*cells*/ 16) {
-    				toggle_class(div, "disabled", !/*allowed*/ ctx[18]);
+    				toggle_class(div, "disabled", !/*allowed*/ ctx[17]);
     			}
 
     			if (dirty & /*selected, Date, year, month, cells*/ 23) {
-    				toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[19]));
+    				toggle_class(div, "selected", /*selected*/ ctx[0] === new Date(/*year*/ ctx[2], /*month*/ ctx[1], /*value*/ ctx[18]));
     			}
     		},
     		d(detaching) {
@@ -740,7 +700,7 @@ var DatePicker = (function () {
     			if (!mounted) {
     				dispose = [
     					listen(input, "focus", /*onFocus*/ ctx[5]),
-    					listen(div, "click", click_handler)
+    					listen(div, "click", click_handler_1)
     				];
 
     				mounted = true;
@@ -775,7 +735,11 @@ var DatePicker = (function () {
     	};
     }
 
-    const click_handler = e => {
+    const click_handler = () => {
+    	
+    };
+
+    const click_handler_1 = e => {
     	e.stopPropagation();
     };
 
@@ -836,7 +800,6 @@ var DatePicker = (function () {
     		$$invalidate(3, showDatePicker = false);
     	});
 
-    	const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
     	let cells;
 
     	const onChange = date => {
@@ -853,7 +816,7 @@ var DatePicker = (function () {
     	$$self.$$set = $$props => {
     		if ("selected" in $$props) $$invalidate(0, selected = $$props.selected);
     		if ("isallowed" in $$props) $$invalidate(11, isallowed = $$props.isallowed);
-    		if ("locale" in $$props) $$invalidate(12, locale = $$props.locale);
+    		if ("locale" in $$props) $$invalidate(10, locale = $$props.locale);
     	};
 
     	$$self.$$.update = () => {
@@ -876,6 +839,11 @@ var DatePicker = (function () {
     		}
     	};
 
+    	 $$invalidate(10, locale = locale => {
+    		setLocales(locale);
+    		return locale;
+    	});
+
     	return [
     		selected,
     		month,
@@ -886,10 +854,9 @@ var DatePicker = (function () {
     		next,
     		prev,
     		convertSelected,
-    		weekdays,
     		onChange,
-    		isallowed,
-    		locale
+    		locale,
+    		isallowed
     	];
     }
 
@@ -897,7 +864,19 @@ var DatePicker = (function () {
     	constructor(options) {
     		super();
     		this.shadowRoot.innerHTML = `<style>input{outline:none;border:1px solid #999999;background-color:inherit;font-weight:300;cursor:pointer}.relative{position:relative}.box{position:fixed;border:1px solid #004666;display:inline-block;font-weight:200;background-color:#004666;color:#ffffff;z-index:10000}.center{display:flex;justify-content:center;align-items:center;width:100%}button{outline:none;border:none;background-color:white;cursor:pointer;justify-content:center;align-items:center;margin:3px;padding:4px}button:hover{background-color:#4A849F;color:white}.container{background-color:#dedede}.row{text-align:center;display:grid;grid-template-columns:auto auto auto auto auto auto auto;font-weight:300;padding:0.3em;flex-wrap:wrap}.cell{display:flex;justify-content:center;align-items:center;margin:3px;padding:4px;background-color:#ededed}.weekday{color:#9a9a9a;font-weight:300;background-color:whitesmoke}.month-name{display:flex;justify-content:space-around;align-items:center;padding:4px 0}.selected{background-color:#4A849F;font-weight:200;color:white;text-shadow:0 0 0.5em white}.highlight{background-color:white;color:grey}.disabled{background-color:#9d9d9d;cursor:not-allowed}.highlight:hover{background-color:#004666;color:white;cursor:pointer}.selected.highlight:hover{background:#004666}</style>`;
-    		init(this, { target: this.shadowRoot }, instance, create_fragment, safe_not_equal, { selected: 0, isallowed: 11, locale: 12 });
+
+    		init(
+    			this,
+    			{
+    				target: this.shadowRoot,
+    				props: attribute_to_object(this.attributes),
+    				customElement: true
+    			},
+    			instance,
+    			create_fragment,
+    			safe_not_equal,
+    			{ selected: 0, isallowed: 11, locale: 10 }
+    		);
 
     		if (options) {
     			if (options.target) {
@@ -934,7 +913,7 @@ var DatePicker = (function () {
     	}
 
     	get locale() {
-    		return this.$$.ctx[12];
+    		return this.$$.ctx[10];
     	}
 
     	set locale(locale) {
