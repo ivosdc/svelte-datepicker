@@ -1,7 +1,7 @@
 <svelte:options tag={'date-picker'}/>
 <script>
     import {createEventDispatcher} from 'svelte';
-    import {getDateRows, weekdays, getMonthLong, setLocales} from "./date-time.js";
+    import {getDateRows, weekdays, setLocales, monthNames} from "./date-time.js";
     import {iconLeft, iconRight} from "./IconService";
 
     const dispatch = createEventDispatcher();
@@ -89,7 +89,7 @@
                 <div>
                     <button type=text on:click={prev}>{@html iconLeft}</button>
                 </div>
-                <div class="center">{getMonthLong(month)} {year}</div>
+                <div class="center">{monthNames[month]} {year}</div>
                 <div>
                     <button type=text on:click={next}>{@html iconRight}</button>
                 </div>
@@ -142,6 +142,9 @@
         background-color: #004666;
         color: #ffffff;
         z-index: 10000;
+        font-size: inherit;
+        padding: 0;
+        margin: 0;
     }
 
     .center {
@@ -159,7 +162,7 @@
         justify-content: center;
         align-items: center;
         margin: 3px;
-        padding: 4px;
+        padding: 3px;
     }
 
     button:hover {
@@ -185,7 +188,7 @@
         justify-content: center;
         align-items: center;
         margin: 3px;
-        padding: 4px;
+        padding: 3px;
         background-color: #ededed;
     }
 
