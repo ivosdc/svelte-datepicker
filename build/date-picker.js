@@ -413,7 +413,7 @@ var DatePicker = (function () {
     	return child_ctx;
     }
 
-    // (86:4) {#if showDatePicker}
+    // (87:4) {#if showDatePicker}
     function create_if_block(ctx) {
     	let div7;
     	let div3;
@@ -586,7 +586,7 @@ var DatePicker = (function () {
     	};
     }
 
-    // (100:20) {#each weekdays as day}
+    // (101:20) {#each weekdays as day}
     function create_each_block_1(ctx) {
     	let div;
     	let t_value = /*day*/ ctx[21] + "";
@@ -609,7 +609,7 @@ var DatePicker = (function () {
     	};
     }
 
-    // (106:20) {#each cells as {allowed, value}}
+    // (107:20) {#each cells as {allowed, value}}
     function create_each_block(ctx) {
     	let div;
     	let t0_value = (/*value*/ ctx[18] || "") + "";
@@ -805,7 +805,8 @@ var DatePicker = (function () {
     	const onChange = date => {
     		$$invalidate(3, showDatePicker = false);
     		$$invalidate(0, selected = new Date(Date.UTC(year, month, date)));
-    		dispatch("datechange", { selected });
+    		let selectedDay = selected.getTime();
+    		dispatch("datechange", { selectedDay });
     	};
 
     	const allow = (year, month, date) => {
