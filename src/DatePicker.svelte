@@ -1,7 +1,7 @@
 <svelte:options tag={'date-picker'}/>
 <script>
     import {createEventDispatcher} from 'svelte';
-    import {getDateRows, getMonthName, uuid, noop} from "./date-time.js";
+    import {getDateRows, weekdays, getMonthLong, setLocales} from "./date-time.js";
     import {iconLeft, iconRight} from "./IconService";
 
     const dispatch = createEventDispatcher();
@@ -12,6 +12,10 @@
     export let isallowed = (date) => {return date.getTime() <= dateNow()};
 
     export let locale = 'en-EN';
+    $: locale = (locale) => {
+        setLocales(locale)
+        return locale;
+    }
 
     let date, month, year, showDatePicker;
     $: {
@@ -58,7 +62,6 @@
         showDatePicker = false;
     });
 
-    const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
     let cells;
 
     const onChange = date => {
@@ -86,7 +89,7 @@
                 <div>
                     <button type=text on:click={prev}>{@html iconLeft}</button>
                 </div>
-                <div class="center">{getMonthName(month)} {year}</div>
+                <div class="center">{getMonthLong(month)} {year}</div>
                 <div>
                     <button type=text on:click={next}>{@html iconRight}</button>
                 </div>
@@ -100,9 +103,9 @@
                 </div>
 
                 <div class="row">
-                    {#each cells as {allowed, value} (uuid())}
+                    {#each cells as {allowed, value}}
                         <div
-                                on:click={allowed && value ? onChange.bind(this, value) : noop}
+                                on:click={allowed && value ? onChange.bind(this, value) : ()=>{}}
                                 class:cell={true}
                                 class:highlight={allowed && value}
                                 class:disabled={!allowed}
