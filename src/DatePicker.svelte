@@ -67,7 +67,8 @@
     const onChange = date => {
         showDatePicker = false;
         selected = new Date(Date.UTC(year, month, date));
-        dispatch('datechange', {selected})
+        let selectedDay = selected.getTime()
+        dispatch('datechange', {selectedDay})
     };
 
     const allow = (year, month, date) => {

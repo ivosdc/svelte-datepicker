@@ -1,6 +1,6 @@
 {
   "name": "svelte-generic-datepicker",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "<date-picker> Web-component or svelte component",
   "svelte": "src/index.js",
   "module": "dist/build/date-picker.mjs",
