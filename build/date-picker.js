@@ -783,7 +783,7 @@ var DatePicker = (function () {
     		$$invalidate(1, month -= 1);
     	};
 
-    	const convertSelected = date => {
+    	const convertSelected = () => {
     		const options = {
     			weekday: "short",
     			year: "numeric",
@@ -791,7 +791,7 @@ var DatePicker = (function () {
     			day: "2-digit"
     		};
 
-    		return date.toLocaleDateString(locale, options);
+    		return selected.toLocaleDateString(locale, options);
     	};
 
     	let site = document.getElementsByTagName("html");
