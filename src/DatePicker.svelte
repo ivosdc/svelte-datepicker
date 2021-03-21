@@ -138,7 +138,7 @@
         position: fixed;
         border: 1px solid #004666;
         display: inline-block;
-        font-weight: 200;
+        font-weight: 100;
         background-color: #004666;
         color: #ffffff;
         z-index: 10000;
@@ -161,8 +161,8 @@
         cursor: pointer;
         justify-content: center;
         align-items: center;
-        margin: 3px;
-        padding: 3px;
+        margin: 3px 8px;
+        padding: 3px 3px 0;
     }
 
     button:hover {
@@ -178,7 +178,7 @@
         text-align: center;
         display: grid;
         grid-template-columns: auto auto auto auto auto auto auto;
-        font-weight: 300;
+        font-weight: 100;
         padding: 0.3em;
         flex-wrap: wrap;
     }
@@ -203,6 +203,7 @@
         justify-content: space-around;
         align-items: center;
         padding: 4px 0;
+        font-weight: 200;
     }
 
     .selected {
