@@ -421,7 +421,7 @@ var DatePicker = (function () {
     	let button0;
     	let t0;
     	let div1;
-    	let t1_value = getMonthLong(/*month*/ ctx[1]) + "";
+    	let t1_value = monthNames[/*month*/ ctx[1]] + "";
     	let t1;
     	let t2;
     	let t3;
@@ -527,7 +527,7 @@ var DatePicker = (function () {
     			}
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*month*/ 2 && t1_value !== (t1_value = getMonthLong(/*month*/ ctx[1]) + "")) set_data(t1, t1_value);
+    			if (dirty & /*month*/ 2 && t1_value !== (t1_value = monthNames[/*month*/ ctx[1]] + "")) set_data(t1, t1_value);
     			if (dirty & /*year*/ 4) set_data(t3, /*year*/ ctx[2]);
 
     			if (dirty & /*weekdays*/ 0) {
@@ -863,7 +863,7 @@ var DatePicker = (function () {
     class DatePicker extends SvelteElement {
     	constructor(options) {
     		super();
-    		this.shadowRoot.innerHTML = `<style>input{outline:none;border:1px solid #999999;background-color:inherit;font-weight:300;cursor:pointer}.relative{position:relative}.box{position:fixed;border:1px solid #004666;display:inline-block;font-weight:200;background-color:#004666;color:#ffffff;z-index:10000}.center{display:flex;justify-content:center;align-items:center;width:100%}button{outline:none;border:none;background-color:white;cursor:pointer;justify-content:center;align-items:center;margin:3px;padding:4px}button:hover{background-color:#4A849F;color:white}.container{background-color:#dedede}.row{text-align:center;display:grid;grid-template-columns:auto auto auto auto auto auto auto;font-weight:300;padding:0.3em;flex-wrap:wrap}.cell{display:flex;justify-content:center;align-items:center;margin:3px;padding:4px;background-color:#ededed}.weekday{color:#9a9a9a;font-weight:300;background-color:whitesmoke}.month-name{display:flex;justify-content:space-around;align-items:center;padding:4px 0}.selected{background-color:#4A849F;font-weight:200;color:white;text-shadow:0 0 0.5em white}.highlight{background-color:white;color:grey}.disabled{background-color:#9d9d9d;cursor:not-allowed}.highlight:hover{background-color:#004666;color:white;cursor:pointer}.selected.highlight:hover{background:#004666}</style>`;
+    		this.shadowRoot.innerHTML = `<style>input{outline:none;border:1px solid #999999;background-color:inherit;font-weight:300;cursor:pointer}.relative{position:relative}.box{position:fixed;border:1px solid #004666;display:inline-block;font-weight:200;background-color:#004666;color:#ffffff;z-index:10000;font-size:inherit;padding:0;margin:0}.center{display:flex;justify-content:center;align-items:center;width:100%}button{outline:none;border:none;background-color:white;cursor:pointer;justify-content:center;align-items:center;margin:3px;padding:3px}button:hover{background-color:#4A849F;color:white}.container{background-color:#dedede}.row{text-align:center;display:grid;grid-template-columns:auto auto auto auto auto auto auto;font-weight:300;padding:0.3em;flex-wrap:wrap}.cell{display:flex;justify-content:center;align-items:center;margin:3px;padding:3px;background-color:#ededed}.weekday{color:#9a9a9a;font-weight:300;background-color:whitesmoke}.month-name{display:flex;justify-content:space-around;align-items:center;padding:4px 0}.selected{background-color:#4A849F;font-weight:200;color:white;text-shadow:0 0 0.5em white}.highlight{background-color:white;color:grey}.disabled{background-color:#9d9d9d;cursor:not-allowed}.highlight:hover{background-color:#004666;color:white;cursor:pointer}.selected.highlight:hover{background:#004666}</style>`;
 
     		init(
     			this,
