@@ -51,10 +51,10 @@
         month -= 1;
     };
 
-    const convertSelected = (date) => {
+    const convertSelected = () => {
         const options = {weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit'};
 
-        return date.toLocaleDateString(locale, options);
+        return selected.toLocaleDateString(locale, options);
     }
 
     let site = document.getElementsByTagName('html');
